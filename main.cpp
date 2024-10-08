@@ -29,10 +29,18 @@ int lives = 3;
 bool ProgramIsRunning();
 void CloseShop();
 
+//RGB Colors
+//Helps us hold and pass RGB color objects
+struct RGB {
+  Uint8 R = 255;
+  Uint8 G = 255;
+  Uint8 B = 255;
+};
+
 //Sprites
 class Sprite {
 private:
-  bool animated = false;
+  bool animated;
 public:
   SDL_Texture* texture = NULL;  //Texture object
   SDL_Rect rect;                //Rectangle object for one sprite
@@ -40,9 +48,8 @@ public:
   int height;                   //Sprite width
   const std::string path;
   //Transparency variables
-  const Uint8 r = 255;
-  const Uint8 g = 255;
-  const Uint8 b = 255;
+  const RGB transparency;
+
   //Movement variables
   int x = 0;                    //X-position
   int y = 0;                    //Y-position
@@ -90,8 +97,8 @@ public:
     FillRect(rect);
   }
   //Single, transparent
-  Sprite(std::string imagePath, Uint8 rTransparency, Uint8 gTransparency, Uint8 bTransparency)
-    : path{imagePath}, r{rTransparency}, g{gTransparency}, b{bTransparency}
+  Sprite(std::string imagePath, RGB color)
+    : path{imagePath}, transparency{color}
   {
     //Set flag for no animation
     animated = false;
@@ -132,8 +139,8 @@ public:
     FillRect(rectPlacement);
   }
   //Animated, transparent
-  Sprite(std::string imagePath, int numFrames, Uint8 rTransparency, Uint8 gTransparency, Uint8 bTransparency)
-    : path{imagePath}, MaxSpriteFrame{numFrames}, r{rTransparency}, g{gTransparency}, b{bTransparency}
+  Sprite(std::string imagePath, int numFrames, RGB color)
+    : path{imagePath}, MaxSpriteFrame{numFrames}, transparency{color}
   {
     //Set flag for animation
     animated = true;
@@ -245,7 +252,7 @@ SDL_Texture* Sprite::loadTexture(SDL_Surface* tempSurface) {
 }
 
 SDL_Surface* Sprite::setTransparentColor(SDL_Surface* tempSurface) {
-  Uint32 colorKey = SDL_MapRGB(tempSurface->format, r, g, b);
+  Uint32 colorKey = SDL_MapRGB(tempSurface->format, transparency.R, transparency.G, transparency.B);
   
   SDL_SetColorKey(tempSurface, SDL_TRUE, colorKey);
   return tempSurface;
