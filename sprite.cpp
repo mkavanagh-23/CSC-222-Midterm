@@ -1,7 +1,15 @@
 #include "sprite.h"
 #include "settings.h"
+#include <SDL2/SDL_render.h>
 
 //Constructor
+//Setup - to be called by child class
+Sprite::Sprite(SDL_Renderer* gameRenderer)
+{
+  //Create local pointer to render object
+  renderer = gameRenderer;
+  
+}
 //Single sprite, no transparency
 Sprite::Sprite(SDL_Renderer* gameRenderer, std::string imagePath) 
   : path{imagePath}
@@ -44,13 +52,10 @@ Sprite::Sprite(SDL_Renderer* gameRenderer, std::string imagePath, RGB color)
 
 //Animated sprite, no transparency
 AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath, int numFrames)
-  : MaxSpriteFrame{numFrames}
+  : Sprite(gameRenderer), MAX_SPRITE_FRAME{numFrames}
 {
   //Copy the image path to the base class variable
   path = imagePath;
-
-  //Create local pointer to render object
-  renderer = gameRenderer;
 
   //Create the texture for the whole sheet
   tempSurface = loadImage();
@@ -60,20 +65,20 @@ AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath
   SDL_QueryTexture(textureSheet, NULL, NULL, &rectSheet.w, &rectSheet.h);
 
   //Get the length and width of a single sprite
-  width = (rectSheet.w / MaxSpriteFrame);
+  width = (rectSheet.w / MAX_SPRITE_FRAME);
   height = rectSheet.h;
 
   //Create sprite and placement rectangles
   FillRect(rect);
-  FillRect(rectPlacement);
+  FillRect(rectPlacement); //Maybe, maybe not
 }
 
 //Animated sprite, transparent
 AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath, int numFrames, RGB color)
-  : path{imagePath}, MaxSpriteFrame{numFrames}, transparency{color}
+  : Sprite(gameRenderer), MAX_SPRITE_FRAME{numFrames}
 {
-  //Create local pointer to render object
-  renderer = gameRenderer;
+  //Copy the image path to the base class variable
+  path = imagePath;
 
   //Create the texture for the whole sheet
   tempSurface = loadImage();
@@ -84,12 +89,12 @@ AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath
   SDL_QueryTexture(textureSheet, NULL, NULL, &rectSheet.w, &rectSheet.h);
 
   //Get the length and width of a single sprite
-  width = (rectSheet.w / MaxSpriteFrame);
+  width = (rectSheet.w / MAX_SPRITE_FRAME);
   height = rectSheet.h;
 
   //Create sprite and placement rectangles
   FillRect(rect);
-  FillRect(rectPlacement);
+  FillRect(rectPlacement); //Maybe, maybe not
 }
 
 
@@ -143,25 +148,24 @@ void Sprite::setLocation(int xPosition, int yPosition) {
   x = xPosition;
   y = yPosition;
   
-  //Update sprite rectangles for display
-  if(animated) {
-    //Move the sprite to the given coordinate
-    rectPlacement.x = x;
-    rectPlacement.y = y;
-  }
-
-  if(!animated) {
-    rect.x = x;
-    rect.y = y;
-  }
+  rect.x = x;
+  rect.y = y;
 }
 
-void Sprite::NextFrame() {                //Advance sprite animation to the next frame
+void AnimatedSprite::NextFrame() {                //Advance sprite animation to the next frame
+  frameCounter++;
+
+  if(frameCounter > FRAME_DELAY) {
+    frameCounter = 0;
+    currentFrame++;
+  }
+
+  if(currentFrame > MAX_SPRITE_FRAME - 1)       //LAST FRAME
+    currentFrame = 0;
+
+  rect.x = currentFrame * rect.w;   //ADVANCE RECTANGLE TO NEXT FRAME ON SHEET
 }
 
 void Sprite::copyToRender(SDL_Renderer* renderer) {
-  if(animated)
-    SDL_RenderCopy(renderer, textureSheet, &rect, &rectPlacement);
-  else
     SDL_RenderCopy(renderer, texture, NULL, &rect);
 }

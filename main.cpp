@@ -82,7 +82,3 @@ void CloseShop() {
   SDL_DestroyWindow(gameWindow);
   SDL_Quit();
 }
-
-void Sprite::NextFrame() {
-}
-
