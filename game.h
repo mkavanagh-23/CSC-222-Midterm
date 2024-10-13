@@ -1,0 +1,12 @@
+//Function Prototypes
+bool InitSDL();
+bool InitGame();
+bool ProgramIsRunning();
+void ClearScreen();
+void PresentRender();
+void UpdateGame();
+void UpdatePlayer();
+void UpdateTarget();
+void UpdateBall();
+void UpdateScore();
+void CloseShop();

@@ -1,6 +1,9 @@
 #include <SDL2/SDL.h>
 #include "sprite.h"
 #include "settings.h"
+#include "game.h"
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -9,76 +12,75 @@
 
 //Global Everything
 //Window
-SDL_Window* gameWindow = NULL;
+extern SDL_Window* gameWindow;
 
 //Renderer
-SDL_Renderer* renderer;
-
-//Surface
-//SDL_Surface* tempSurface;
+extern SDL_Renderer* renderer;
 
 //Function Prototypes
-bool ProgramIsRunning();
-void CloseShop();
 
 //
 //BEGIN PROGRAM//
 //
 
 int main(int argc, char* args[]) {
-  //Initialize all SDL variables
-  if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-    std::cout << "Failed to initialize SDL!\n";
+  //Initialize gameplay objects
+  if(!InitGame()) {
+    CloseShop();
     return 1;
   }
 
-  //Create the game window
-  gameWindow = SDL_CreateWindow("Matthew Kavanagh - Midterm Program", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Settings::SCREEN_WIDTH, Settings::SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-
-  //Create a renderer
-  renderer = SDL_CreateRenderer(gameWindow, -1, 0);
-
-  //Set up Gameplay Variables
-  int playerScore = 0;
-  int playerLives = 3;
-
-  //Set up the graphics objects
+  //Create sprite objects (images)
   //Create background object at 0,0
-  Sprite background(renderer, "/graphics/background.bmp");
-  background.setLocation(0, 0);
+  Sprite background("graphics/spiderbackground.bmp");
+  background.setLocation(Coordinate{0, 0});
 
   //Create player paddle and align at center right
-  Sprite player(renderer, "/graphics/paddle.bmp", RGB{});
-  player.setLocation(Settings::SCREEN_WIDTH - player.width, (Settings::SCREEN_HEIGHT - player.height) / 2);
+  Sprite player("graphics/bonepaddle.bmp", RGB{241, 0, 251});
+  player.setLocation(Coordinate{Settings::SCREEN_WIDTH - player.width, (Settings::SCREEN_HEIGHT - player.height) / 2});
 
   //Create target object and align at center left
-  AnimatedSprite target(renderer, "/graphics/target.bmp", 8, RGB{});
-  target.setLocation(0, (Settings::SCREEN_HEIGHT - target.height) / 2);
+  AnimatedSprite target("graphics/skeletonsheet.bmp", 12, RGB{0, 0, 0});
+  target.setLocation(Coordinate{0, (Settings::SCREEN_HEIGHT - target.height) / 2});
 
-  //Create the ball object and start in random location
-  AnimatedSprite ball(renderer, "/graphics/ball.bmp", 8, RGB{});
+  //Create the ball object and start centered horizontally with a random vertical position between 150 and 450
+  AnimatedSprite ball("graphics/skullsheet.bmp", 8, RGB{0, 255, 252});
+  ball.setLocation(Coordinate{(Settings::SCREEN_WIDTH - ball.width) / 2, rand()% 300 + 150});
 
   //Create score objects and center along bottom
-  AnimatedSprite score(renderer, "graphics/score.bmp", 4);
-  AnimatedSprite lives(renderer, "graphics/health.bmp", 4);
-  score.setLocation((Settings::SCREEN_WIDTH - (score.width + lives.width)) / 2, Settings::SCREEN_HEIGHT - score.height);
-  lives.setLocation((Settings::SCREEN_WIDTH + (score.width + lives.width)) / 2, Settings::SCREEN_HEIGHT - score.height);
+  //AnimatedSprite score("graphics/score.bmp", 4);
+  //AnimatedSprite lives("graphics/health.bmp", 4);
+  //score.setLocation(Coordinate{(Settings::SCREEN_WIDTH - (score.width + lives.width)) / 2, Settings::SCREEN_HEIGHT - score.height});
+  //lives.setLocation(Coordinate{(Settings::SCREEN_WIDTH + (score.width + lives.width)) / 2, Settings::SCREEN_HEIGHT - score.height});
 
   //PLAY THE GAME
-}
+  while(ProgramIsRunning()) {
+    long int oldTime = SDL_GetTicks(); //The current time of program execution
 
-bool ProgramIsRunning() {
-  SDL_Event event;
-  bool running = true;
-  while(SDL_PollEvent(&event)) {
-    if(event.type == SDL_QUIT)
-      running = false;
-  }
-  return running;
-}
+    //Draw the screen
+    ClearScreen();
+    background.copyToRender();
+    ball.copyToRender();
+    player.copyToRender();
+    target.copyToRender();
+    //score.copyToRender();
+    //lives.copyToRender();
+    PresentRender();
 
-void CloseShop() {
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(gameWindow);
-  SDL_Quit();
-}
+    //Update game objects
+    player.move();
+    target.move();
+    ball.move();
+
+    int frameTime = SDL_GetTicks() - oldTime; //Calculate how long it took to draw and run the game
+
+    //Determine how long to delay based on time to run
+    if(frameTime < Settings::FRAME_DELAY)
+      SDL_Delay(Settings::FRAME_DELAY - frameTime);
+  } //END GAME LOOP
+
+  CloseShop();
+  return 0;
+}//END MAIN
+
+

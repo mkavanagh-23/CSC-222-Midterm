@@ -2,21 +2,17 @@
 #include "settings.h"
 #include <SDL2/SDL_render.h>
 
+extern SDL_Renderer* renderer;
+
 //Constructor
 //Setup - to be called by child class
-Sprite::Sprite(SDL_Renderer* gameRenderer)
+Sprite::Sprite()
 {
-  //Create local pointer to render object
-  renderer = gameRenderer;
-  
 }
 //Single sprite, no transparency
-Sprite::Sprite(SDL_Renderer* gameRenderer, std::string imagePath) 
+Sprite::Sprite(std::string imagePath) 
   : path{imagePath}
 {
-  //Create local pointer to render object
-  renderer = gameRenderer;
-
   //Create the texture
   tempSurface = loadImage();
   texture = loadTexture(tempSurface);
@@ -30,12 +26,9 @@ Sprite::Sprite(SDL_Renderer* gameRenderer, std::string imagePath)
   FillRect(rect);
 }
 //Single sprite, transparent
-Sprite::Sprite(SDL_Renderer* gameRenderer, std::string imagePath, RGB color)
+Sprite::Sprite(std::string imagePath, RGB color)
   : path{imagePath}, transparency{color}
 {
-  //Create local pointer to render object
-  renderer = gameRenderer;
-
   //Create the texture
   tempSurface = loadImage();
   tempSurface = setTransparentColor(tempSurface);
@@ -51,8 +44,8 @@ Sprite::Sprite(SDL_Renderer* gameRenderer, std::string imagePath, RGB color)
 }
 
 //Animated sprite, no transparency
-AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath, int numFrames)
-  : Sprite(gameRenderer), MAX_SPRITE_FRAME{numFrames}
+AnimatedSprite::AnimatedSprite(std::string imagePath, int numFrames)
+  : Sprite(), MAX_SPRITE_FRAME{numFrames}
 {
   //Copy the image path to the base class variable
   path = imagePath;
@@ -74,8 +67,8 @@ AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath
 }
 
 //Animated sprite, transparent
-AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath, int numFrames, RGB color)
-  : Sprite(gameRenderer), MAX_SPRITE_FRAME{numFrames}
+AnimatedSprite::AnimatedSprite(std::string imagePath, int numFrames, RGB color)
+  : Sprite(), MAX_SPRITE_FRAME{numFrames}
 {
   //Copy the image path to the base class variable
   path = imagePath;
@@ -99,8 +92,8 @@ AnimatedSprite::AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath
 
 
 void Sprite::FillRect(SDL_Rect& rect) {
-  rect.x = x;
-  rect.y = y;
+  rect.x = position.x;
+  rect.y = position.y;
   rect.w = width;
   rect.h = height;
 }
@@ -133,23 +126,26 @@ SDL_Surface* Sprite::setTransparentColor(SDL_Surface* tempSurface) {
   return tempSurface;
 }
 
-void Sprite::setLocation(int xPosition, int yPosition) {
+bool Sprite::setLocation(Coordinate coordinate) {
   //Check for valid point
-  if((xPosition < 0) || (xPosition > (Settings::SCREEN_WIDTH - width))) {
+  if((coordinate.x < 0) || (coordinate.x > (Settings::SCREEN_WIDTH - width))) {
       std::cout << "Invalid move coordinate entered. Sprite not moved\n";
-      return;
+      return false;
   }
-  if((yPosition < 0) || (yPosition > (Settings::SCREEN_HEIGHT - height))) {
+  if((coordinate.y < 0) || (coordinate.y > (Settings::SCREEN_HEIGHT - height))) {
       std::cout << "Invalid move coordinate entered. Sprite not moved\n";
-      return;
+      return false;
   }
 
   //Set sprite x and y variables to given coordinates
-  x = xPosition;
-  y = yPosition;
+  position.x = coordinate.x;
+  position.y = coordinate.y;
   
-  rect.x = x;
-  rect.y = y;
+  //Set the location for the rectangle
+  rect.x = position.x;
+  rect.y = position.y;
+
+  return true;
 }
 
 void AnimatedSprite::NextFrame() {                //Advance sprite animation to the next frame
@@ -166,6 +162,6 @@ void AnimatedSprite::NextFrame() {                //Advance sprite animation to 
   rect.x = currentFrame * rect.w;   //ADVANCE RECTANGLE TO NEXT FRAME ON SHEET
 }
 
-void Sprite::copyToRender(SDL_Renderer* renderer) {
+void Sprite::copyToRender() {
     SDL_RenderCopy(renderer, texture, NULL, &rect);
 }

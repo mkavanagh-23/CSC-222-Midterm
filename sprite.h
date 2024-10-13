@@ -6,6 +6,12 @@
 #include <SDL2/SDL_surface.h>
 #include <iostream>
 
+//Coordinates
+//Helps us hold and pass x,y coordinate values
+struct Coordinate {
+  int x, y;
+};
+
 //RGB Colors
 //Helps us hold and pass RGB color objects
 struct RGB {    //Defaults to white
@@ -18,7 +24,6 @@ struct RGB {    //Defaults to white
 /****************** CREATE A POINTER TO THE RENDER OBJECT *********************/
 class Sprite {
 protected:
-  SDL_Renderer* renderer = NULL; //Pointer to a render object, set to &renderer in constructor
   SDL_Texture* texture = NULL;  //Texture object
   SDL_Rect rect;                //Rectangle object for one sprite
   static SDL_Surface* tempSurface;      //Temporary surface for creating textured objects
@@ -29,8 +34,7 @@ public:
   int width;                    //Sprite height
   int height;                   //Sprite width
   //Movement variables
-  int x = 0;                    //X-position
-  int y = 0;                    //Y-position
+  Coordinate position {0, 0};    //X and Y-position
   int xDir = 0;                 //X-direction, 1 = right, -1 = left, 0 = none
   int yDir = 0;                 //Y-direction, 1 = down, -1 = up, 0 = none
   double speed = 0;             //How many pixels to move sprite by
@@ -42,17 +46,17 @@ protected:
   
 public:
   //Function prototypes
-  void setLocation(int xPosition, int yPosition);       //Move the sprite to the given coordinates (check if in-bounds)
-  void copyToRender(SDL_Renderer* renderer);          //Copy the sprite to the render to be presented to the screen
+  bool setLocation(Coordinate coordinate);       //Move the sprite to the given coordinates (check if in-bounds)
+  void copyToRender();          //Copy the sprite to the render to be presented to the screen
+  void move();
 
 public:
   //Constructors
-  Sprite(SDL_Renderer* gameRenderer);
-  Sprite(SDL_Renderer* gameRenderer, std::string imagePath); 
-  Sprite(SDL_Renderer* gameRenderer, std::string imagePath, RGB color);
+  Sprite();
+  Sprite(std::string imagePath); 
+  Sprite(std::string imagePath, RGB color);
   //Destructor - Clean up textures when object goes out of scope
   ~Sprite() {
-    renderer = NULL;
     SDL_DestroyTexture(texture);
   }
 };
@@ -68,8 +72,8 @@ private:
   const int FRAME_DELAY = 2;
 public:
   void NextFrame();                 //Advance sprite animation to the next frame
-  AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath, int numFrames);
-  AnimatedSprite(SDL_Renderer* gameRenderer, std::string imagePath, int numFrames, RGB color);
+  AnimatedSprite(std::string imagePath, int numFrames);
+  AnimatedSprite(std::string imagePath, int numFrames, RGB color);
 };
 
 #endif
